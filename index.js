@@ -44,6 +44,19 @@ app.get('/api/persons', (request, response) => {
 app.post('/api/persons', (request, response) => {
   const body = request.body
 
+  if (!body.name) {
+    return response.status(400).json({
+      error: 'name not given'
+    })
+  } else if (!body.number) {
+    return response.status(400).json({
+      error: 'number not given'
+    })
+  } else if (persons.find(p => p.name === body.name)) {
+    return response.status(400).json({
+      error: 'name must be unique'
+    })
+  }
   const person = {
     id: generateId(),
     name: body.name,
