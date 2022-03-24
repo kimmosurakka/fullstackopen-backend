@@ -10,6 +10,7 @@ morgan.token('post-body', (req, rest) =>
 
 app.use(cors())
 app.use(express.json())
+app.use(express.static('build'))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :post-body'))
 
 const PORT = process.env.PORT || 3001
