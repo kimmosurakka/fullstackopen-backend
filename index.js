@@ -1,3 +1,4 @@
+const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
 
@@ -7,6 +8,7 @@ morgan.token('post-body', (req, rest) =>
   req.method === 'POST' ? JSON.stringify(req.body) : undefined
 )
 
+app.use(cors())
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :post-body'))
 
