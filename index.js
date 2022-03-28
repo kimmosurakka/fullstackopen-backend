@@ -1,6 +1,9 @@
+require('dotenv').config()
+
 const cors = require('cors')
 const express = require('express')
 const morgan = require('morgan')
+const Person = require('./models/person')
 
 const app = express()
 
@@ -48,7 +51,24 @@ const generateId = () => {
 }
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
+})
+
+app.get('/api/persons/:id', (request, response) => {
+  Person.findById(request.params.id)
+  .then(person => {
+    if (person) {
+      response.json(person)
+    } else {
+      response.status(404).end()
+    }  
+  })
+  .catch(reason => {
+    console.log('Query error', reason)
+    response.status(500).end()
+  })
 })
 
 app.post('/api/persons', (request, response) => {
@@ -81,17 +101,6 @@ app.get('/info', (request, response) => {
   response.send(
     `<p>Phonebook has info for ${persons.length} people.<p>${new Date()}`
   )
-})
-
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const person = persons.find(p => p.id === id)
-
-  if (person) {
-    response.json(person)
-  } else {
-    response.status(404).end()
-  }
 })
 
 app.delete('/api/persons/:id', (request, response) => {
