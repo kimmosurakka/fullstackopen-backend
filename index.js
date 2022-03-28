@@ -104,11 +104,10 @@ app.get('/info', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-
-  persons = persons.filter(p => p.id !== id)
-
-  response.status(204).end()
+  Person.findByIdAndDelete(request.params.id)
+  .then(query => {
+    response.status(204).end()
+  })
 })
 
 app.listen(PORT, () => {
