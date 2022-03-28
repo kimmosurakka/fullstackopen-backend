@@ -99,10 +99,13 @@ app.delete('/api/persons/:id', (request, response, next) => {
   .catch(error => next(error))
 })
 
-app.get('/info', (request, response) => {
-  response.send(
-    `<p>Phonebook has info for TODO people.<p>${new Date()}`
-  )
+app.get('/info', (request, response, next) => {
+  Person.count()
+    .then(number => {
+      response.send(
+        `<p>Phonebook has info for ${number} people.<p>${new Date()}`)
+    })
+    .catch(error => next(error))
 })
 
 const errorHandler = (error, request, response, next) => {
