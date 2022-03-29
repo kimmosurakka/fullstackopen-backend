@@ -12,10 +12,10 @@ const listPersons = (personModel) => {
 }
 
 const addPerson = (personModel, name, number) => {
-  const person = new personModel({name, number })
+  const person = new personModel({ name, number })
   return person
     .save()
-    .then(result => {
+    .then(() => {
       console.log('Person saved.')
     })
 }
@@ -39,7 +39,7 @@ const personSchema = new mongoose.Schema({
 
 const Person = mongoose.model('Person', personSchema)
 
-if (process.argv.length == 5) {
+if (process.argv.length === 5) {
   addPerson(Person, process.argv[3], process.argv[4])
     .then(() => mongoose.connection.close())
 } else {

@@ -7,7 +7,7 @@ const Person = require('./models/person')
 
 const app = express()
 
-morgan.token('request-body', (req, rest) =>
+morgan.token('request-body', (req) =>
   req.method === 'POST' || req.method === 'PUT' ? JSON.stringify(req.body) : undefined
 )
 
@@ -45,7 +45,7 @@ app.get('/api/persons/:id', (request, response, next) => {
         response.json(person)
       } else {
         response.status(404).end()
-      }  
+      }
     })
     .catch(error => next(error))
 })
@@ -63,17 +63,17 @@ app.put('/api/persons/:id', (request, response, next) => {
         response.json(updatedPerson)
       } else {
         response.status(404).end()
-      }  
+      }
     })
     .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-  .then(query => {
-    response.status(204).end()
-  })
-  .catch(error => next(error))
+    .then(() => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 app.get('/info', (request, response, next) => {
@@ -91,7 +91,7 @@ const errorHandler = (error, request, response, next) => {
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
-    return response.status(400).json({error: error.message})
+    return response.status(400).json({ error: error.message })
   }
   next(error)
 }
