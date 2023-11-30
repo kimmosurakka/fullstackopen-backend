@@ -10,7 +10,6 @@ primary_region = "arn"
 
 [env]
   PORT = "3000"
-  MONGODB_URI = "dummy"
 
 [http_service]
   internal_port = 3000
