@@ -74,3 +74,20 @@ describe('total likes', () => {
     expect(listHelper.totalLikes(blogs)).toBe(36)
   })
 })
+
+describe('favorite blog', () => {
+  test('of empty list is undefined', () => {
+    const result = listHelper.favoriteBlog([])
+    expect(result).toBeUndefined()
+  })
+
+  test('of single-element list be the only element', () => {
+    const result = listHelper.favoriteBlog([blogs[1]])
+    expect(result).toEqual(blogs[1])
+  })
+
+  test('of longer list return the most liked element', () => {
+    const result = listHelper.favoriteBlog(blogs)
+    expect(result).toEqual(blogs[2])
+  })
+})
