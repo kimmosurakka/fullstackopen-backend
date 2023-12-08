@@ -101,15 +101,37 @@ describe('most blogs', () => {
   test('of single-element list be the only author', () => {
     const result = listHelper.mostBlogs([blogs[1]])
     expect(result).toEqual({
-      'author': blogs[1].author,
-      'blogs': 1
+      author: blogs[1].author,
+      blogs: 1
     })
   })
 
   test('of list produces most productive author', () => {
     expect(listHelper.mostBlogs(blogs)).toEqual({
-      'author': 'Robert C. Martin',
-      'blogs': 3
+      author: 'Robert C. Martin',
+      blogs: 3
+    })
+  })
+})
+
+describe('most likes', () => {
+  test('of empty list produces undefined', () => {
+    const result = listHelper.mostLikes([])
+    expect(result).toBeUndefined()
+  })
+
+  test('of single-element list be the only author', () => {
+    const result = listHelper.mostLikes([blogs[2]])
+    expect(result).toEqual({
+      author: blogs[2].author,
+      likes: blogs[2].likes
+    })
+  })
+
+  test('of list produces most liked author', () => {
+    expect(listHelper.mostLikes(blogs)).toEqual({
+      author: 'Edsger W. Dijkstra',
+      likes: 17
     })
   })
 })
