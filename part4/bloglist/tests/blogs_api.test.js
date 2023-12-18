@@ -67,7 +67,7 @@ test('Can create new blog', async () => {
     .post('/api/blogs')
     .send(newEntry)
     .expect(201)
-    .expect('Content-Type', /application\/json/ )
+    .expect('Content-Type', /application\/json/)
 
   const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
   expect(blogsInDb.length).toBe(initialNoteCount + 1)
@@ -75,6 +75,26 @@ test('Can create new blog', async () => {
   const titles = blogsInDb.map(blog => blog.title)
   expect(titles).toContain('A New Start')
 })
+
+test('post sets default value to likes', async() => {
+  const entry = {
+    title: 'How To Cut Onions',
+    author: 'R. U. Sharp',
+    url: 'http://127.0.0.1/tor'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(entry)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+    const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
+  const createdBlog = blogsInDb.find(blog => blog.title === 'How To Cut Onions')
+  expect(createdBlog).toBeDefined()
+  expect(createdBlog.likes).toBe(0)
+})
+
 
 afterAll(async () => {
   await mongoose.connection.close()
