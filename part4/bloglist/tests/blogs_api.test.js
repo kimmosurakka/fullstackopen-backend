@@ -54,6 +54,28 @@ test('blogs have ID', async () => {
   expect(a_blog.id).toBeDefined()
 })
 
+test('Can create new blog', async () => {
+  const initialNoteCount = (await Blog.find({})).length
+
+  const newEntry = {
+    title: 'A New Start',
+    author: 'Edgar',
+    url: 'http://go.to/start',
+    likes: 1234
+  }
+  await api
+    .post('/api/blogs')
+    .send(newEntry)
+    .expect(201)
+    .expect('Content-Type', /application\/json/ )
+
+  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
+  expect(blogsInDb.length).toBe(initialNoteCount + 1)
+
+  const titles = blogsInDb.map(blog => blog.title)
+  expect(titles).toContain('A New Start')
+})
+
 afterAll(async () => {
   await mongoose.connection.close()
 })
