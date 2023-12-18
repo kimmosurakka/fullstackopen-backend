@@ -89,12 +89,44 @@ test('post sets default value to likes', async() => {
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
-    const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
+  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
   const createdBlog = blogsInDb.find(blog => blog.title === 'How To Cut Onions')
   expect(createdBlog).toBeDefined()
   expect(createdBlog.likes).toBe(0)
 })
 
+test('post fails with 400 if title is missing', async() => {
+  const entry = {
+    author: 'R. U. Sharp',
+    url: 'http://127.0.0.1/tor'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(entry)
+    .expect(400)
+
+  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
+  const createdBlog = blogsInDb.find(blog => blog.author === 'R. U. Sharp')
+  expect(createdBlog).not.toBeDefined()
+})
+
+test('post fails with 400 if url is missing', async() => {
+  const entry = {
+    title: 'How To Cut Onions',
+    author: 'R. U. Sharp',
+    likes: 10
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(entry)
+    .expect(400)
+
+  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
+  const createdBlog = blogsInDb.find(blog => blog.author === 'R. U. Sharp')
+  expect(createdBlog).not.toBeDefined()
+})
 
 afterAll(async () => {
   await mongoose.connection.close()
