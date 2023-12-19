@@ -15,15 +15,16 @@ blogsRouter.post('/', async (request, response) => {
     likes: body.likes
   })
 
-  try {
-    const result = await blog.save()
-    response.status(201).json(result)
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      response.status(400).json({ error: error.message })
-    } else {
-      throw error
-    }
+  const result = await blog.save()
+  response.status(201).json(result)
+})
+
+blogsRouter.delete('/:id', async (request, response) => {
+  const deleted = await Blog.findByIdAndDelete(request.params.id)
+  if (!deleted) {
+    response.status(404).end()
+  } else {
+    response.status(204).end()
   }
 })
 

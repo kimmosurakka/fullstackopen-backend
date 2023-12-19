@@ -2,130 +2,139 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
+const helper = require('./test_helper')
+
 const Blog = require('../models/blog')
 
-const initialBlogs = [
-  {
-    title: 'My first blog entry',
-    author: 'Rob',
-    url: 'http://foo.bar/1',
-    likes: 0
-  },
-  {
-    title: 'Why are there no followers?',
-    author: 'Rob',
-    url: 'http://foo.bar/2',
-    likes: 0
-  },
-  {
-    title: 'I quit this thing',
-    author: 'Rob',
-    url: 'http://foo.bar/3',
-    likes: 10
-  }
-]
 
 beforeEach(async () => {
   await Blog.deleteMany({})
-  const promises = initialBlogs
-    .map(blog => new Blog(blog))
-    .map(blog => blog.save())
+  await Blog.insertMany(helper.initialBlogs)
+})
+
+describe('Get all blogs', () => {
+  test('returns blogs as json', async () => {
+    await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+  })
+
+  test('returns correct amount of blogs', async () => {
+    const response = await api.get('/api/blogs')
+
+    expect(response.body).toHaveLength(3)
+  })
+
+  test('blogs have ID', async () => {
+    const response = await api.get('/api/blogs')
+    const a_blog = response.body[0]
+
+    expect(a_blog.id).toBeDefined()
+  })
+})
+
+describe('Post new blog', () => {
+  test('can create new blog', async () => {
+    const initialNoteCount = (await helper.blogsInDb()).length
+
+    const newEntry = {
+      title: 'A New Start',
+      author: 'Edgar',
+      url: 'http://go.to/start',
+      likes: 1234
+    }
+    await api
+      .post('/api/blogs')
+      .send(newEntry)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    const blogsInDb = await helper.blogsInDb()
+    expect(blogsInDb.length).toBe(initialNoteCount + 1)
+
+    const titles = blogsInDb.map(blog => blog.title)
+    expect(titles).toContain('A New Start')
+  })
+
+  test('when likes is missing, sets default value', async () => {
+    const entry = {
+      title: 'How To Cut Onions',
+      author: 'R. U. Sharp',
+      url: 'http://127.0.0.1/tor'
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(entry)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    const blogsInDb = await helper.blogsInDb()
+    const createdBlog = blogsInDb.find(blog => blog.title === 'How To Cut Onions')
+    expect(createdBlog).toBeDefined()
+    expect(createdBlog.likes).toBe(0)
+  })
+
+  test('when title is missing, fails with 400', async () => {
+    const entry = {
+      author: 'R. U. Sharp',
+      url: 'http://127.0.0.1/tor'
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(entry)
+      .expect(400)
+
+    const blogsInDb = await helper.blogsInDb()
+    const createdBlog = blogsInDb.find(blog => blog.author === 'R. U. Sharp')
+    expect(createdBlog).not.toBeDefined()
+  })
+
+  test('when url is missing, fails with 400', async () => {
+    const entry = {
+      title: 'How To Cut Onions',
+      author: 'R. U. Sharp',
+      likes: 10
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(entry)
+      .expect(400)
+
+    const blogsInDb = await helper.blogsInDb()
+    const createdBlog = blogsInDb.find(blog => blog.author === 'R. U. Sharp')
+    expect(createdBlog).not.toBeDefined()
+  })
+})
+
+describe('Deleting a blog entry', () => {
+
+  test('With valid ID succeeds', async () => {
+    const blogToDelete = (await helper.blogsInDb())[0]
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .expect(204)
     
-  await Promise.all(promises)
-})
+    const blogsInDb = await helper.blogsInDb()
+    expect(blogsInDb.find(blog => blog.id === blogToDelete.id)).not.toBeDefined()
+  })
 
-test('returns blogs as json', async () => {
-  await api
-    .get('/api/blogs')
-    .expect(200)
-    .expect('Content-Type', /application\/json/)
-})
+  test('With invalid ID fails (bad request)', async () => {
+    await api
+      .delete('/api/blogs/BAD_ID')
+      .expect(400)
+  })
 
-test('returns correct amount of blogs', async () => {
-  const response = await api.get('/api/blogs')
-
-  expect(response.body).toHaveLength(3)
-})
-
-test('blogs have ID', async () => {
-  const response = await api.get('/api/blogs')
-  const a_blog = response.body[0]
-
-  expect(a_blog.id).toBeDefined()
-})
-
-test('Can create new blog', async () => {
-  const initialNoteCount = (await Blog.find({})).length
-
-  const newEntry = {
-    title: 'A New Start',
-    author: 'Edgar',
-    url: 'http://go.to/start',
-    likes: 1234
-  }
-  await api
-    .post('/api/blogs')
-    .send(newEntry)
-    .expect(201)
-    .expect('Content-Type', /application\/json/)
-
-  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
-  expect(blogsInDb.length).toBe(initialNoteCount + 1)
-
-  const titles = blogsInDb.map(blog => blog.title)
-  expect(titles).toContain('A New Start')
-})
-
-test('post sets default value to likes', async() => {
-  const entry = {
-    title: 'How To Cut Onions',
-    author: 'R. U. Sharp',
-    url: 'http://127.0.0.1/tor'
-  }
-
-  await api
-    .post('/api/blogs')
-    .send(entry)
-    .expect(201)
-    .expect('Content-Type', /application\/json/)
-
-  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
-  const createdBlog = blogsInDb.find(blog => blog.title === 'How To Cut Onions')
-  expect(createdBlog).toBeDefined()
-  expect(createdBlog.likes).toBe(0)
-})
-
-test('post fails with 400 if title is missing', async() => {
-  const entry = {
-    author: 'R. U. Sharp',
-    url: 'http://127.0.0.1/tor'
-  }
-
-  await api
-    .post('/api/blogs')
-    .send(entry)
-    .expect(400)
-
-  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
-  const createdBlog = blogsInDb.find(blog => blog.author === 'R. U. Sharp')
-  expect(createdBlog).not.toBeDefined()
-})
-
-test('post fails with 400 if url is missing', async() => {
-  const entry = {
-    title: 'How To Cut Onions',
-    author: 'R. U. Sharp',
-    likes: 10
-  }
-
-  await api
-    .post('/api/blogs')
-    .send(entry)
-    .expect(400)
-
-  const blogsInDb = (await Blog.find({})).map(blog => blog.toJSON())
-  const createdBlog = blogsInDb.find(blog => blog.author === 'R. U. Sharp')
-  expect(createdBlog).not.toBeDefined()
+  test('With nonexistent ID fails (not found)', async () => {
+    const noSuchId = await helper.nonexistentId()
+    await api
+      .delete(`/api/blogs/${noSuchId}`)
+      .expect(404)
+  })
 })
 
 afterAll(async () => {
