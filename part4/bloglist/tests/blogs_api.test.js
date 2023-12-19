@@ -135,6 +135,46 @@ describe('Deleting a blog entry', () => {
       .delete(`/api/blogs/${noSuchId}`)
       .expect(404)
   })
+
+})
+
+describe('Updating a blog entry', () => {
+
+  test('Updating likes works', async () => {
+    const blogsInDb = await helper.blogsInDb();
+    const blogToUpdate = blogsInDb[1];
+    const originalLikes = blogToUpdate.likes;
+    const newBlog = {...blogToUpdate, likes: originalLikes + 99}
+
+    const response = await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send(newBlog)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+    expect(response.body).toEqual(newBlog)
+
+    const blogsNowInDb = await helper.blogsInDb();
+    const updatedBlog = blogsNowInDb.find(b => b.id === blogToUpdate.id)
+    expect(updatedBlog).toEqual(newBlog)
+  })
+
+  test('With invalid ID fails (bad request)', async () => {
+    const blog = {title: 'foo', author: 'bar', url: 'foobar'}
+    await api
+      .put('/api/blogs/BAD_ID')
+      .send(blog)
+      .expect(400)
+  })
+
+  test('With nonexistent ID fails (not found)', async () => {
+    const blog = {title: 'foo', author: 'bar', url: 'foobar'}
+    const noSuchId = await helper.nonexistentId()
+    await api
+      .put(`/api/blogs/${noSuchId}`)
+      .send(blog)
+      .expect(404)
+  })
+
 })
 
 afterAll(async () => {
