@@ -118,7 +118,7 @@ describe('Deleting a blog entry', () => {
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
       .expect(204)
-    
+
     const blogsInDb = await helper.blogsInDb()
     expect(blogsInDb.find(blog => blog.id === blogToDelete.id)).not.toBeDefined()
   })
@@ -141,10 +141,10 @@ describe('Deleting a blog entry', () => {
 describe('Updating a blog entry', () => {
 
   test('Updating likes works', async () => {
-    const blogsInDb = await helper.blogsInDb();
-    const blogToUpdate = blogsInDb[1];
-    const originalLikes = blogToUpdate.likes;
-    const newBlog = {...blogToUpdate, likes: originalLikes + 99}
+    const blogsInDb = await helper.blogsInDb()
+    const blogToUpdate = blogsInDb[1]
+    const originalLikes = blogToUpdate.likes
+    const newBlog = { ...blogToUpdate, likes: originalLikes + 99 }
 
     const response = await api
       .put(`/api/blogs/${blogToUpdate.id}`)
@@ -153,13 +153,13 @@ describe('Updating a blog entry', () => {
       .expect('Content-Type', /application\/json/)
     expect(response.body).toEqual(newBlog)
 
-    const blogsNowInDb = await helper.blogsInDb();
+    const blogsNowInDb = await helper.blogsInDb()
     const updatedBlog = blogsNowInDb.find(b => b.id === blogToUpdate.id)
     expect(updatedBlog).toEqual(newBlog)
   })
 
   test('With invalid ID fails (bad request)', async () => {
-    const blog = {title: 'foo', author: 'bar', url: 'foobar'}
+    const blog = { title: 'foo', author: 'bar', url: 'foobar' }
     await api
       .put('/api/blogs/BAD_ID')
       .send(blog)
@@ -167,7 +167,7 @@ describe('Updating a blog entry', () => {
   })
 
   test('With nonexistent ID fails (not found)', async () => {
-    const blog = {title: 'foo', author: 'bar', url: 'foobar'}
+    const blog = { title: 'foo', author: 'bar', url: 'foobar' }
     const noSuchId = await helper.nonexistentId()
     await api
       .put(`/api/blogs/${noSuchId}`)

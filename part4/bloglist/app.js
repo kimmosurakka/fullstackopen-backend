@@ -10,7 +10,7 @@ const logger = require('./utils/logger')
 const middleware = require('./utils/middleware')
 
 mongoose.connect(config.MONGODB_URI).then(
-    logger.info('Connected to MongoDB.')
+  logger.info('Connected to MongoDB.')
 )
 
 app.use(cors())
