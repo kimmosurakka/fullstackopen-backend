@@ -1,0 +1,23 @@
+### Create user
+
+POST  http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+  "username": "root",
+  "name": "Superuser",
+  "password": "salainen"
+}
+
+### List users
+GET  http://localhost:3000/api/users
+
+### Login
+
+POST  http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "root",
+  "password": "salainen"
+}
