@@ -9,7 +9,31 @@ Content-Type: application/json
   "password": "salainen"
 }
 
+### Create user, username too short
+
+POST  http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+  "username": "ro",
+  "name": "Superuser",
+  "password": "salainen"
+}
+
+
+### Create user, password too short
+
+POST  http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+  "username": "root",
+  "name": "Superuser",
+  "password": "sa"
+}
+
 ### List users
+
 GET  http://localhost:3000/api/users
 
 ### Login
