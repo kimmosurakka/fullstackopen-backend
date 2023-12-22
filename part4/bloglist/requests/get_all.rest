@@ -1,1 +1,17 @@
 GET http://localhost:3000/api/blogs
+
+### Get single
+
+GET http://localhost:3000/api/blogs/656de56782675ff098106922
+
+### Update single
+PUT http://localhost:3000/api/blogs/656de56782675ff098106922
+Content-Type: application/json
+
+{
+  "title": "You won't believe this",
+  "author": "Vlad Impaler",
+  "url": "file://127.0.0.1/C/",
+  "likes": 122,
+  "extra": ";DROP TABLE User;"
+}
