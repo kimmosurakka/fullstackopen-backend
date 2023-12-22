@@ -1,5 +1,6 @@
 POST http://localhost:3000/api/blogs
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJpZCI6IjY1ODJmODc4Yjg5NjRhOGM4ZGYzYjgwYSIsImlhdCI6MTcwMzI1MzU1OSwiZXhwIjoxNzAzMjU3MTU5fQ.CL7QcZ40alxTvPgHHGczjMzpgGhdSDtjCMVrgKF_pAI
 
 {
     "title": "You won't believe this",
