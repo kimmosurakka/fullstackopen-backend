@@ -4,9 +4,9 @@ POST  http://localhost:3000/api/users
 Content-Type: application/json
 
 {
-  "username": "root",
-  "name": "Superuser",
-  "password": "salainen"
+  "username": "pekka",
+  "name": "Petelius Kakkarainen",
+  "password": "peku"
 }
 
 ### Create user, username too short
@@ -44,4 +44,13 @@ Content-Type: application/json
 {
   "username": "root",
   "password": "salainen"
+}
+
+###
+POST  http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "pekka",
+  "password": "peku"
 }

@@ -16,6 +16,23 @@ const getUserFromRequest = async (request, response) => {
   return user
 }
 
+const validateUser = async (blogId, request, response) => {
+  const user = await getUserFromRequest(request, response)
+  if (! user ) {
+    return {}
+  }
+  const blog = await Blog.findById(blogId)
+  if (!blog) {
+    response.status(404).json({ error: 'No such blog' })
+    return {}
+  }
+  if (!user._id.equals(blog.user)) {
+    response.status(401).json({ error: 'Access denied' })
+    return {}
+  }
+  return { user, blog }
+}
+
 blogsRouter.get('/', async (request, response) => {
   const blogs = await Blog.find({})
     .populate('user', { name: 1, username:1, id:1 })
@@ -47,40 +64,41 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 blogsRouter.put('/:id', async (request, response) => {
-  const user = await getUserFromRequest(request, response)
-  if (! user ) {
+  const { user, blog } = await validateUser(request.params.id, request, response)
+  if (!user) {
     return
   }
   const body = request.body
-  const blog = {
+  const newBlog = {
     title: body.title,
     author: body.author,
     url: body.url,
     likes: body.likes,
-    user: user._id
+    user: blog.user
   }
   const updatedBlog = await Blog.findByIdAndUpdate(
     request.params.id,
-    blog,
+    newBlog,
     { new: true, runValidators: true, context: 'query' }
   ).populate('user', { username: 1, name: 1, id:1 })
   if (!updatedBlog) {
     response.status(404).end()
   } else {
-    // Probably should also remove from previous user
-    if (!user.blogs.includes(updatedBlog._id)) {
-      user.blogs = user.blogs.concat(updatedBlog._id)
-      await user.save()
-    }
     response.json(updatedBlog)
   }
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
+  const { user, blog } = await validateUser(request.params.id, request, response)
+  if (! user ) {
+    return
+  }
   const deleted = await Blog.findByIdAndDelete(request.params.id)
   if (!deleted) {
     response.status(404).end()
   } else {
+    user.blogs = user.blogs.filter(b => ! b._id.equals(blog._id))
+    await user.save()
     response.status(204).end()
   }
 })

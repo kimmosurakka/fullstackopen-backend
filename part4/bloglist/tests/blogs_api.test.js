@@ -1,3 +1,5 @@
+process.env.JWT_SECRET = 'TestSecret'
+
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
@@ -6,10 +8,22 @@ const helper = require('./test_helper')
 
 const Blog = require('../models/blog')
 
+const getToken = async(username, password) => {
+  const response = await api
+    .post('/api/login')
+    .send({ username: username, password: password })
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+  const body = response.body
+  return body.token
+}
 
 beforeEach(async () => {
   await Blog.deleteMany({})
-  await Blog.insertMany(helper.initialBlogs)
+  const dummyUsers = await helper.createDummyUsers()
+  const secretary = dummyUsers.find(user => user.username === 'secretary')
+  const blogs = helper.initialBlogs.map(b => ({ ...b, user: secretary._id }) )
+  await Blog.insertMany(blogs)
 })
 
 describe('Get all blogs', () => {
@@ -23,7 +37,7 @@ describe('Get all blogs', () => {
   test('returns correct amount of blogs', async () => {
     const response = await api.get('/api/blogs')
 
-    expect(response.body).toHaveLength(3)
+    expect(response.body).toHaveLength(helper.initialBlogs.length)
   })
 
   test('blogs have ID', async () => {
@@ -44,8 +58,10 @@ describe('Post new blog', () => {
       url: 'http://go.to/start',
       likes: 1234
     }
+    const token = await getToken('secretary', 'secretWord')
     await api
       .post('/api/blogs')
+      .auth(token, { type: 'bearer' })
       .send(newEntry)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -64,8 +80,10 @@ describe('Post new blog', () => {
       url: 'http://127.0.0.1/tor'
     }
 
+    const token = await getToken('secretary', 'secretWord')
     await api
       .post('/api/blogs')
+      .auth(token, { type: 'bearer' })
       .send(entry)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -82,8 +100,10 @@ describe('Post new blog', () => {
       url: 'http://127.0.0.1/tor'
     }
 
+    const token = await getToken('secretary', 'secretWord')
     await api
       .post('/api/blogs')
+      .auth(token, { type: 'bearer' })
       .send(entry)
       .expect(400)
 
@@ -99,8 +119,10 @@ describe('Post new blog', () => {
       likes: 10
     }
 
+    const token = await getToken('secretary', 'secretWord')
     await api
       .post('/api/blogs')
+      .auth(token, { type: 'bearer' })
       .send(entry)
       .expect(400)
 
@@ -114,25 +136,40 @@ describe('Deleting a blog entry', () => {
 
   test('With valid ID succeeds', async () => {
     const blogToDelete = (await helper.blogsInDb())[0]
-
-    await api
-      .delete(`/api/blogs/${blogToDelete.id}`)
+    const token = await getToken('secretary', 'secretWord')
+    await api.delete(`/api/blogs/${blogToDelete.id}`)
+      .auth(token, { type: 'bearer' })
       .expect(204)
 
     const blogsInDb = await helper.blogsInDb()
     expect(blogsInDb.find(blog => blog.id === blogToDelete.id)).not.toBeDefined()
   })
 
+  test('With wrong user ID fails', async () => {
+    const blogToDelete = (await helper.blogsInDb())[0]
+    const token = await getToken('admin', 'dummyPass')
+    await api.delete(`/api/blogs/${blogToDelete.id}`)
+      .auth(token, { type: 'bearer' })
+      .expect(401)
+
+    const blogsInDb = await helper.blogsInDb()
+    expect(blogsInDb.find(blog => blog.id === blogToDelete.id)).toBeDefined()
+  })
+
   test('With invalid ID fails (bad request)', async () => {
+    const token = await getToken('secretary', 'secretWord')
     await api
       .delete('/api/blogs/BAD_ID')
+      .auth(token, { type: 'bearer' })
       .expect(400)
   })
 
   test('With nonexistent ID fails (not found)', async () => {
     const noSuchId = await helper.nonexistentId()
+    const token = await getToken('secretary', 'secretWord')
     await api
       .delete(`/api/blogs/${noSuchId}`)
+      .auth(token, { type: 'bearer' })
       .expect(404)
   })
 
@@ -146,8 +183,10 @@ describe('Updating a blog entry', () => {
     const originalLikes = blogToUpdate.likes
     const newBlog = { ...blogToUpdate, likes: originalLikes + 99 }
 
+    const token = await getToken('secretary', 'secretWord')
     const response = await api
       .put(`/api/blogs/${blogToUpdate.id}`)
+      .auth(token, { type: 'bearer' })
       .send(newBlog)
       .expect(200)
       .expect('Content-Type', /application\/json/)
@@ -160,8 +199,10 @@ describe('Updating a blog entry', () => {
 
   test('With invalid ID fails (bad request)', async () => {
     const blog = { title: 'foo', author: 'bar', url: 'foobar' }
+    const token = await getToken('secretary', 'secretWord')
     await api
       .put('/api/blogs/BAD_ID')
+      .auth(token, { type: 'bearer' })
       .send(blog)
       .expect(400)
   })
@@ -169,8 +210,10 @@ describe('Updating a blog entry', () => {
   test('With nonexistent ID fails (not found)', async () => {
     const blog = { title: 'foo', author: 'bar', url: 'foobar' }
     const noSuchId = await helper.nonexistentId()
+    const token = await getToken('secretary', 'secretWord')
     await api
       .put(`/api/blogs/${noSuchId}`)
+      .auth(token, { type: 'bearer' })
       .send(blog)
       .expect(404)
   })
