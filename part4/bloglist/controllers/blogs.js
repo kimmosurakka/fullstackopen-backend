@@ -1,20 +1,18 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
+const { AccessDeniedError, PageNotFoundError }  = require('../utils/errors')
 
-
-const validateUser = async (blogId, request, response) => {
+const validateUser = async (blogId, request) => {
   const user = request.user
   if (! user ) {
-    return {}
+    throw new AccessDeniedError('Access denied')
   }
   const blog = await Blog.findById(blogId)
   if (!blog) {
-    response.status(404).json({ error: 'No such blog' })
-    return {}
+    throw new PageNotFoundError('Blog not found')
   }
   if (!user._id.equals(blog.user)) {
-    response.status(401).json({ error: 'Access denied' })
-    return {}
+    throw new AccessDeniedError('Access denied')
   }
   return { user, blog }
 }
@@ -27,8 +25,8 @@ blogsRouter.get('/', async (request, response) => {
 
 blogsRouter.post('/', async (request, response) => {
   const user = request.user
-  if (! user ) {
-    return
+  if (!user ) {
+    throw new AccessDeniedError('Access denied')
   }
 
   const body = request.body
@@ -50,10 +48,7 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 blogsRouter.put('/:id', async (request, response) => {
-  const { user, blog } = await validateUser(request.params.id, request, response)
-  if (!user) {
-    return
-  }
+  const { blog } = await validateUser(request.params.id, request)
   const body = request.body
   const newBlog = {
     title: body.title,
@@ -68,25 +63,20 @@ blogsRouter.put('/:id', async (request, response) => {
     { new: true, runValidators: true, context: 'query' }
   ).populate('user', { username: 1, name: 1, id:1 })
   if (!updatedBlog) {
-    response.status(404).end()
-  } else {
-    response.json(updatedBlog)
+    throw new PageNotFoundError('Blog not found')
   }
+  response.json(updatedBlog)
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
   const { user, blog } = await validateUser(request.params.id, request, response)
-  if (! user ) {
-    return
-  }
   const deleted = await Blog.findByIdAndDelete(request.params.id)
   if (!deleted) {
-    response.status(404).end()
-  } else {
-    user.blogs = user.blogs.filter(b => ! b._id.equals(blog._id))
-    await user.save()
-    response.status(204).end()
+    throw new PageNotFoundError('Blog not found')
   }
+  user.blogs = user.blogs.filter(b => ! b._id.equals(blog._id))
+  await user.save()
+  response.status(204).end()
 })
 
 module.exports = blogsRouter

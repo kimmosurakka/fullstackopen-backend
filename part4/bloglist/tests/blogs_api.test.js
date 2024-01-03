@@ -73,6 +73,27 @@ describe('Post new blog', () => {
     expect(titles).toContain('A New Start')
   })
 
+  test('can not create new blog if not logged in', async () => {
+    const initialNoteCount = (await helper.blogsInDb()).length
+
+    const newEntry = {
+      title: 'A New Start',
+      author: 'Edgar',
+      url: 'http://go.to/start',
+      likes: 1234
+    }
+    await api
+      .post('/api/blogs')
+      .send(newEntry)
+      .expect(401)
+
+    const blogsInDb = await helper.blogsInDb()
+    expect(blogsInDb.length).toBe(initialNoteCount)
+
+    const titles = blogsInDb.map(blog => blog.title)
+    expect(titles).not.toContain('A New Start')
+  })
+
   test('when likes is missing, sets default value', async () => {
     const entry = {
       title: 'How To Cut Onions',

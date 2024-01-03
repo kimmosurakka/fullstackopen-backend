@@ -1,13 +1,7 @@
 const jwt = require('jsonwebtoken')
 const logger = require('./logger')
 const User = require('../models/user')
-
-class UserExtractError extends Error {
-  constructor(message) {
-    super(message)
-    this.name = 'UserExtractError'
-  }
-}
+const { AccessDeniedError } = require('../utils/errors')
 
 const requestLogger = (request, response, next) => {
   logger.info('Method:', request.method)
@@ -34,7 +28,7 @@ const userExtractor = async (request, response, next) => {
       }
       const user = await User.findById(decodedToken.id)
       if (!user) {
-        throw new UserExtractError('Invalid user')
+        throw new AccessDeniedError('Invalid user')
       }
       request.user = user
     }
@@ -56,10 +50,12 @@ const errorHandler = (error, request, response, next) => {
     return response.status(400).json({ error: 'Malformatted ID' })
   } else if (error.name === 'ValidationError' || error.name === 'TypeError') {
     return response.status(400).json({ error: error.message })
-  } else if (error.name === 'JsonWebTokenError' || error.name === 'UserExtractError') {
+  } else if (error.name === 'JsonWebTokenError' || error.name === 'AccessDeniedError') {
     return response.status(401).json({ error: error.message })
   } else if (error.name === 'TokenExpiredError') {
     return response.status(401).json({ error: 'Token expired' })
+  } else if (error.name === 'PageNotFoundError') {
+    return response.status(404).json({ error: error.message })
   }
   next(error)
 }
